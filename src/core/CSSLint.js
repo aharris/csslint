@@ -14,8 +14,7 @@ var CSSLint = (function(){
     var rules           = [],
         formatters      = [],
         embeddedRuleset = /\/\*csslint([^\*]*)\*\//,
-        api             = new parserlib.util.EventTarget(),
-        ignore          = [];
+        api             = new parserlib.util.EventTarget();
 
     api.version = "@VERSION@";
 
@@ -178,6 +177,7 @@ var CSSLint = (function(){
         var i = 0,
             reporter,
             lines,
+            ignore = [],
             report,
             parser = new parserlib.css.Parser({ starHack: true, ieFilters: true,
                                                 underscoreHack: true, strict: false });
@@ -189,11 +189,11 @@ var CSSLint = (function(){
             ignoreStop = null;
         CSSLint.Util.forEach(lines, function (line, lineno) {
             // Keep oldest, "unclosest" ignore:start
-            if(null === ignoreStart && line.match(/[ \t]*\/\*[ \t]+csslint[ \t]+ignore:start[ \t]+\*\//i)) {
+            if(null === ignoreStart && line.match(/\/\*[ \t]*csslint[ \t]+ignore:start[ \t]*\*\//i)) {
                 ignoreStart = lineno;
             }
 
-            if(line.match(/\/\*[ \t]+csslint[ \t]+ignore:stop[ \t]+\*\//i)) {
+            if(line.match(/\/\*[ \t]*csslint[ \t]+ignore:stop[ \t]*\*\//i)) {
                 ignoreStop = lineno;
             }
 
@@ -205,7 +205,7 @@ var CSSLint = (function(){
 
         // Close remaining ignore block, if any
         if(null !== ignoreStart) {
-            ignore.push([ignoreStart, lines.length + 1]);
+            ignore.push([ignoreStart, lines.length]);
         }
 
         if (!ruleset){
@@ -240,7 +240,8 @@ var CSSLint = (function(){
         report = {
             messages    : reporter.messages,
             stats       : reporter.stats,
-            ruleset     : reporter.ruleset
+            ruleset     : reporter.ruleset,
+            ignore      : ignore
         };
 
         //sort by line numbers, rollups at the bottom
